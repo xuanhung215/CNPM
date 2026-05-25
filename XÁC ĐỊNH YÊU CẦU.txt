@@ -1,0 +1,86 @@
+﻿NHÓM 7: XÁC ĐỊNH YÊU CẦU PHẦN MỀM CHẤM ĐIỂM RÈN LUYỆN CỦA SINH VIÊN HVCS
+I. Khảo sát hiện trạng.
+1. Quy trình thực tế đang diễn ra (Manual Process) Hiện nay, công tác đánh giá điểm rèn luyện của sinh viên tại trường thường được thực hiện theo phương pháp thủ công hoặc bán thủ công (sử dụng giấy hoặc file Excel rời rạc). Quy trình thường trải qua các bước:
+* Sinh viên nhận mẫu phiếu đánh giá (giấy/file Word/Excel), tự điền điểm và in ra.
+* Sinh viên nộp kèm các minh chứng (bản photo giấy khen, chứng chỉ, hình ảnh in ra giấy) cho Ban cán sự lớp.
+* Ban cán sự lớp tập hợp, chấm điểm cấp lớp thủ công, sau đó nộp toàn bộ hồ sơ bản cứng (hoặc gửi qua email/Zalo) cho Cố vấn học tập (CVHT).
+* CVHT kiểm tra lại và chốt điểm, ký xác nhận bảng điểm tổng hợp rồi nộp lên Phòng Công tác Sinh viên (CTSV).
+2. Những khó khăn và hạn chế của hiện trạng (Pain points)
+* Đối với Sinh viên:
+o Mất nhiều thời gian, công sức in ấn phiếu và photo minh chứng.
+o Không theo dõi được tiến độ duyệt điểm của mình (không biết BCS hay CVHT đã duyệt đến đâu, điểm bị trừ ở khoản nào).
+o Dễ bị thất lạc giấy tờ, minh chứng trong quá trình truyền tay qua nhiều cấp.
+o Quá trình khiếu nại, thắc mắc điểm số gặp khó khăn, thủ tục rườm rà.
+* Đối với Ban Cán sự Lớp & Cố vấn Học tập:
+o Việc thu thập, lưu trữ hàng chục hồ sơ giấy tờ/file rời rạc từ sinh viên rất cồng kềnh, dễ nhầm lẫn.
+o Phải đối chiếu minh chứng bằng mắt thường, tốn rất nhiều thời gian tổng hợp điểm và tính toán (dễ xảy ra sai sót cơ học khi cộng điểm).
+o Khó khăn trong việc đôn đốc những sinh viên nộp trễ hạn do không có hệ thống cảnh báo/quản lý deadline tập trung.
+* Đối với Quản trị viên / Phòng CTSV (Admin):
+o Quản lý dữ liệu phân tán, dẫn đến việc tổng hợp báo cáo, thống kê xếp loại (Xuất sắc, Tốt, Khá...) cho toàn bộ học viện mất rất nhiều thời gian.
+o Khó kiểm soát được sự minh bạch trong việc chấm điểm và sửa điểm của các cấp cơ sở (thiếu tính năng lưu vết - Audit log để theo dõi ai sửa, lý do sửa).
+o Khó khăn trong việc lưu trữ lâu dài và tra cứu lại lịch sử điểm rèn luyện của sinh viên ở các khóa, các năm học trước.
+3. Kết luận từ việc khảo sát Từ những bất cập trên, việc số hóa quy trình và Xây dựng phần mềm chấm điểm rèn luyện là hoàn toàn cấp thiết. Hệ thống mới sẽ giải quyết triệt để các bài toán: tự động hóa tính điểm, nộp minh chứng trực tuyến (PDF, JPG), quản lý tập trung thời hạn (deadline), phân cấp duyệt rõ ràng và minh bạch hóa mọi quá trình thay đổi điểm số.
+
+II. Phân tích Chi tiết Luồng Nghiệp vụ (Business Workflows)
+Hệ thống vận hành dựa trên 3 luồng nghiệp vụ cốt lõi, được phân cấp rõ ràng theo từng giai đoạn và vai trò người dùng:
+1. Luồng Nghiệp vụ Đánh giá & Xét duyệt (Grading Workflow)
+* Bước 1 - Tự đánh giá: Sinh viên là trung tâm, tiến hành điền điểm tự chấm vào phiếu rèn luyện theo các tiêu chí trường định sẵn. Đi kèm với điểm số, sinh viên phải nộp các minh chứng tương ứng.
+* Bước 2 - Duyệt cấp 1 (Ban Cán sự Lớp): Đóng vai trò cấp duyệt thứ nhất, BCS lớp sẽ xem xét phiếu tự đánh giá và tiến hành chấm điểm cấp lớp. Tại bước này, BCS phải kiểm tra và xác nhận tính hợp lệ (hoặc không hợp lệ) của các minh chứng do sinh viên nộp. Điểm do BCS chấm có thể tăng hoặc giảm so với điểm sinh viên tự chấm.
+* Bước 3 - Duyệt cấp 2 (Cố vấn Học tập): CVHT là cấp duyệt thứ hai và quyết định ở quy mô lớp học. CVHT xem xét điểm do BCS chấm và đưa ra điểm đánh giá cuối cùng.
+* Bước 4 - Chốt kỳ đánh giá: Khi hoàn tất duyệt, CVHT thực hiện "Khóa sổ lớp" để xác nhận hoàn thành và chốt dữ liệu gửi lên cấp Khoa/Trường.
+2. Luồng Nghiệp vụ Xử lý Khiếu nại & Điều chỉnh Điểm (Dispute Resolution Workflow)
+* Khởi tạo yêu cầu: Khi phát hiện sai sót hoặc thấy điểm duyệt chưa hợp lý, sinh viên tạo phiếu yêu cầu sửa điểm hoặc gửi khiếu nại/phúc khảo. Sinh viên bắt buộc nhập lý do và đính kèm minh chứng bổ sung.
+* Xử lý sơ bộ (Cấp Lớp): BCS lớp tiếp nhận yêu cầu sửa điểm. Nếu hợp lý, BCS có thể cập nhật lại điểm cấp lớp hoặc chuyển tiếp yêu cầu (kèm ghi chú) lên CVHT.
+* Xử lý quyết định (Cấp Lớp): CVHT tiếp nhận và giải quyết các thắc mắc, khiếu nại. CVHT có quyền chỉnh sửa điểm trực tiếp trên hệ thống nếu yêu cầu chính đáng và đợt đánh giá vẫn đang mở.
+* Xử lý đặc cách (Cấp Trường): Quản trị viên/Phòng CTSV tham gia xử lý các tranh chấp vượt quá thẩm quyền của CVHT. Admin có quyền mở khóa và sửa điểm trực tiếp cho sinh viên trong các trường hợp đặc biệt (ví dụ: đã quá hạn duyệt của CVHT nhưng sinh viên có minh chứng giải trình hợp lệ).
+3. Luồng Nghiệp vụ Quản trị Mùa vụ (Season Management Workflow)
+* Thiết lập ban đầu: Trước mỗi kỳ, Admin quản lý, thiết lập khung điểm và cập nhật nội dung tiêu chí theo quy định của năm học.
+* Kiểm soát tiến độ: Admin tiến hành Mở/Đóng đợt đánh giá. Hệ thống yêu cầu cài đặt thời hạn (deadline) riêng biệt, phân cấp rõ ràng cho từng nhóm: Hạn tự chấm, Hạn BCS duyệt, Hạn CVHT duyệt.
+Nhóm Nghiệp VụChức Năng Nghiệp VụMô Tả Chi TiếtĐối Tượng Thực HiệnQuản trị & Thiết lập Hệ thốngĐăng nhập & Quản lý cá nhânĐăng nhập vào hệ thống bằng tài khoản được cấp. Đổi mật khẩu và cập nhật thông tin cá nhân cơ bản tùy theo vai trò.Tất cả người dùng (SV, BCS, CVHT, Admin)Quản lý danh mụcThêm, sửa, xóa thông tin Khoa, Khóa học, Lớp học, Danh sách sinh viên và CVHT.Admin / CTSVQuản lý tài khoảnTạo tài khoản, cấp quyền cho SV và CVHT dựa trên danh sách đầu vào. Hỗ trợ tìm kiếm, lọc thông tin người dùng.Admin / CTSVThiết lập tiêu chí đánh giáKhởi tạo khung điểm, nội dung các tiêu chí rèn luyện và cập nhật/điều chỉnh theo từng năm học.Admin / CTSVĐiều phối kỳ đánh giáMở/đóng cổng chấm điểm; cài đặt thời hạn (deadline) riêng biệt cho từng cấp độ (SV tự chấm, BCS duyệt, CVHT duyệt).Admin / CTSVĐánh giá & Xét duyệt ĐiểmTự đánh giá & Nộp minh chứngĐiền điểm tự chấm theo tiêu chí; tải lên file minh chứng (PDF, JPG) hợp lệ cho các hoạt động.Sinh viên, BCS LớpChấm điểm & Duyệt cấp LớpXem xét phiếu và minh chứng của thành viên; chấm điểm cấp lớp (có thể tăng/giảm); đánh dấu hợp lệ/không hợp lệ cho minh chứng.BCS LớpDuyệt điểm cấp CVHTCăn cứ trên kết quả BCS đã chấm để đưa ra điểm đánh giá chốt ở cấp Lớp.CVHTKhóa sổ lớp (Chốt điểm)Xác nhận hoàn tất việc chấm điểm toàn lớp và chốt dữ liệu để báo cáo lên cấp Khoa/Trường.CVHTTra cứu & Lưu trữ hồ sơXem lại điểm rèn luyện, xếp loại và minh chứng của các học kỳ, năm học trước.Tất cả người dùngXử lý Khiếu nại & Sửa điểmTạo yêu cầu/Khiếu nạiGửi yêu cầu phúc khảo, sửa điểm; bắt buộc nhập lý do và đính kèm minh chứng bổ sung.Sinh viên, BCS LớpXử lý sơ bộ (Cấp Lớp)Tiếp nhận yêu cầu; cập nhật lại điểm cấp lớp nếu thấy hợp lý hoặc chuyển tiếp (kèm ghi chú) lên CVHT.BCS LớpXử lý & Sửa điểm (Cấp CVHT)Giải quyết khiếu nại; trực tiếp chỉnh sửa điểm trên hệ thống nếu yêu cầu chính đáng và trong thời hạn mở cổng.CVHTXử lý đặc cách (Cấp Trường)Mở khóa và sửa điểm trực tiếp giải quyết các tranh chấp vượt thẩm quyền CVHT hoặc khi đã quá hạn hệ thống.Admin / CTSVLưu vết (Audit Log)Hệ thống tự động ghi nhận mọi thao tác sửa điểm: Ai sửa, thời gian, điểm cũ, điểm mới và lý do sửa.Hệ thống (Tự động)Thống kê, Báo cáo & Thông báoBáo cáo cấp LớpXuất bảng điểm tổng hợp (Excel) của lớp; xem thống kê tỷ lệ xếp loại (Xuất sắc, Tốt, Khá...).BCS Lớp, CVHTBáo cáo cấp TrườngXuất báo cáo tổng hợp toàn trường, vẽ biểu đồ tỷ lệ xếp loại, xuất danh sách SV xuất sắc/yếu kém để xét học bổng/kỷ luật.Admin / CTSVThông báo nội bộAdmin gửi thông báo; CVHT gửi thông báo cho lớp mình quản lý; SV và BCS nhận thông báo.Cả 4 đối tượng
+III. Yêu cầu Chức năng Hệ thống Chi tiết (Detailed System Functions)
+Dưới đây là các chức năng phần mềm được ánh xạ trực tiếp từ tài liệu, chia theo vai trò người dùng:
+1. Đối tượng Sinh viên (Student)
+* Quản lý tài khoản: Đăng nhập, quản lý tài khoản, đổi mật khẩu và cập nhật thông tin cá nhân cơ bản.
+* Đánh giá & Minh chứng: * Điền điểm vào phiếu tự đánh giá rèn luyện.
+o Tải lên file minh chứng (định dạng PDF, JPG như hình ảnh, chứng chỉ, giấy khen).
+* Tra cứu: * Xem kết quả/tiến độ đánh giá (điểm BCS và CVHT duyệt).
+o Xem xếp loại rèn luyện cuối kỳ.
+o Lưu trữ và tra cứu lịch sử điểm rèn luyện cùng minh chứng của các học kỳ/năm học trước.
+* Hỗ trợ:
+o Tạo phiếu yêu cầu sửa điểm, nhập lý do và đính kèm minh chứng bổ sung.
+o Gửi yêu cầu phúc khảo, khiếu nại.
+o Nhận thông báo từ CVHT và Quản trị viên.
+2. Đối tượng Ban Cán sự Lớp (Class Committee)
+* Kế thừa: Có toàn bộ chức năng của một sinh viên bình thường để tự đánh giá.
+* Quản lý Cấp lớp:
+o Chấm điểm & duyệt minh chứng cấp Lớp. Chấm điểm dựa trên việc xem xét phiếu và minh chứng của thành viên (có thể tăng/giảm điểm).
+o Đánh dấu minh chứng là hợp lệ hoặc không hợp lệ.
+o Theo dõi tiến độ, xem danh sách sinh viên chưa chấm điểm và nhắc nhở đúng hạn.
+* Xử lý yêu cầu: Xem xét yêu cầu sửa điểm, cập nhật điểm cấp lớp hoặc chuyển tiếp lên CVHT kèm ghi chú.
+* Báo cáo: Xuất bảng điểm tổng hợp của toàn lớp (file Excel).
+3. Đối tượng Cố vấn Học tập (Academic Advisor)
+* Quản lý lớp học: Đăng nhập, cập nhật thông tin cá nhân liên quan đến lớp đang quản lý.
+* Duyệt điểm: Chấm điểm & chốt điểm cấp CVHT, đưa ra điểm đánh giá cuối cùng dựa trên điểm BCS chấm.
+* Xử lý khiếu nại: Tiếp nhận, giải quyết khiếu nại của sinh viên và chỉnh sửa điểm trực tiếp nếu hợp lệ.
+* Khóa sổ: Xác nhận hoàn thành chấm điểm của lớp và chốt dữ liệu gửi lên cấp trên.
+* Thống kê & Tra cứu: * Xem báo cáo thống kê tình hình xếp loại rèn luyện của lớp (Xuất sắc, Tốt, Khá, Trung bình, Yếu).
+o Tìm kiếm thông tin điểm rèn luyện thông qua tên hoặc mã số sinh viên.
+* Thông báo: Gửi thông báo cho sinh viên trong lớp quản lý và nhận thông báo từ Quản trị viên.
+4. Đối tượng Quản trị viên / Phòng CTSV (Admin)
+* Quản trị Hệ thống: * Quản lý danh mục: Thêm, sửa, xóa dữ liệu Khoa, Khóa học, Lớp học, Danh sách sinh viên, Danh sách CVHT.
+o Tạo tài khoản cho sinh viên và CVHT dựa trên danh sách phòng CTSV.
+* Quản lý Tiêu chí & Mùa vụ: * Thiết lập khung điểm, nội dung tiêu chí và cập nhật theo năm học.
+o Đóng/mở đợt đánh giá và cài đặt thời hạn (deadline) cho từng cấp độ.
+* Quyền hạn Đặc biệt: Mở khóa và trực tiếp sửa điểm (sửa điểm đặc cách), giải quyết tranh chấp vượt thẩm quyền CVHT.
+* Lưu vết (Audit Log): Hệ thống bắt buộc lưu lại lịch sử sửa điểm của người dùng (BCS, CVHT, Admin) bao gồm: Ai sửa, sửa lúc nào, điểm cũ, điểm mới và lý do sửa.
+* Báo cáo & Tiện ích: * Thống kê & xuất báo cáo quy mô toàn trường (biểu đồ xếp loại, danh sách sinh viên xuất sắc/yếu kém).
+o Gửi thông báo toàn học viện.
+o Tìm kiếm và lọc thông tin người dùng.
+5. Yêu cầu Cấu trúc Dữ liệu Hệ thống (Data Objects)
+* Phiếu chấm điểm (Grading Form): Lưu ID phiếu, Mã SV, Mã HK, Điểm các cấp (Tự chấm, Lớp, CVHT), Tổng điểm, Xếp loại, Trạng thái (Bản nháp, Chờ BCS duyệt, Chờ CVHT duyệt, Đã hoàn thành). Có chức năng tự động tính tổng điểm và lưu lịch sử đổi điểm.
+* Tiêu chí đánh giá (Criterion): Lưu ID, Mã cha (phân cấp mục I, I.1...), Nội dung, Điểm tối đa, và Cờ Yêu cầu minh chứng (Có/Không).
+* Minh chứng (Evidence): Lưu ID, Mã SV, Mã tiêu chí, Đường dẫn URL file, Trạng thái duyệt.
+* Kỳ đánh giá (Semester/Evaluation Period): Lưu Mã HK, Tên HK, Ngày bắt đầu, Ngày kết thúc các mốc thời gian
+6. Yêu cầu chất lượng 
+STTNội DungTiêu ChíMô TảGhi chú1Bảo mật phân quyềnBảo Mật Hệ thống giới hạn quyền truy cập dữ liệu khắt khe: SV chỉ xem được của cá nhân, BCS/CVHT chỉ xem được lớp mình quản lý, Admin có toàn quyền.Đảm bảo tính riêng tư cho dữ liệu điểm số của cá nhân.2Bảo mật dữ liệu (Audit Log)Bảo mậtBất cứ khi nào điểm bị thay đổi, hệ thống phải lưu lại: Ai sửa, thời gian, điểm cũ, điểm mới, lý do sửa.Chức năng bắt buộc để đảm bảo sự minh bạch và giải quyết tranh chấp.3Bảo mật tài khoảnBảo mậtMật khẩu người dùng trước khi lưu xuống cơ sở dữ liệu phải được mã hóa để tránh tình trạng rò rỉ thông tin.Bảo vệ an toàn cho cả quản trị viên và sinh viên.4Khả năng chịu tải (Concurrency)Hiệu năngĐảm bảo hệ thống không bị treo, sập nguồn (crash) vào những ngày cao điểm (sát deadline đóng cổng) khi lượng lớn SV vào nộp minh chứng.Có thể nâng cấp (scale) server linh hoạt theo từng đợt mở cổng.5Thời gian phản hồi (Response time)Hiệu năngCác thao tác cơ bản phải phản hồi nhanh. Riêng tác vụ tải lên file minh chứng (upload) được phép kéo dài tối đa 10 giây.Trải nghiệm thực tế có thể phụ thuộc vào đường truyền mạng của người dùng.6Tối ưu lưu trữHiệu năngChỉ cho phép tải lên file định dạng PDF, JPG. Giới hạn dung lượng để tiết kiệm không gian máy chủ hệ thống.Nên có cơ chế tự động nén ảnh khi tải lên nếu có thể.7Khả năng tương thích thiết bị (Responsive)Tiện dụngGiao diện phải tự động co giãn cho phù hợp với kích thước màn hình thiết bị đang sử dụng mà không bị vỡ layout.Rất quan trọng vì SV thường dùng điện thoại chụp ảnh giấy khen để nộp luôn.8Trải nghiệm sử dụng (UX) và Cảnh báoTiện dụngCó cảnh báo bằng popup rõ ràng khi: Nhập sai định dạng, thiếu file bắt buộc, điểm vượt quá quy định hoặc sắp đến hạn chót (deadline).Giúp người dùng hạn chế sai sót khi thao tác.9Tính sẵn sàng (Uptime)Tin cậyHệ thống phải hoạt động liên tục. Tuyệt đối không được thực hiện bảo trì, nâng cấp làm gián đoạn lúc đang mở cổng đợt đánh giá.10Sao lưu và An toàn Dữ liệu (Backup)Tin cậyCơ sở dữ liệu điểm và các file minh chứng phải được sao lưu dự phòng sang một nguồn lưu trữ khác để tránh mất mát khi sự cố.Đảm bảo khả năng phục hồi (Recovery) nhanh nhất có thể.11Khả năng tùy biến và Bảo trìTiến hoá Admin có thể chủ động thay đổi khung điểm, thêm/sửa/xóa các tiêu chí mới trên giao diện mà không cần nhờ lập trình viên sửa code.Tiêu chí rèn luyện thường xuyên thay đổi theo quy định từng năm học.
+

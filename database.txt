@@ -1,0 +1,219 @@
+﻿-- =========================================================================
+-- PHẦN 1: QUẢN LÝ TÀI KHOẢN VÀ DANH MỤC CƠ SỞ (ADMIN QUẢN LÝ)
+-- =========================================================================
+
+-- 1. Bảng Users (Quản lý đăng nhập chung cho toàn hệ thống)
+CREATE TABLE users (
+id INT AUTO_INCREMENT PRIMARY KEY,
+username VARCHAR(100) NOT NULL UNIQUE COMMENT 'Mã SV, Mã GV hoặc Tên đăng nhập',
+password VARCHAR(255) NOT NULL,
+role VARCHAR(20) NOT NULL COMMENT 'sinhvien, cvht, admin',
+is_active BOOLEAN DEFAULT TRUE,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 2. Bảng Năm học
+CREATE TABLE namhoc (
+id INT AUTO_INCREMENT PRIMARY KEY,
+ten_namhoc VARCHAR(20) NOT NULL COMMENT 'VD: 2023-2024'
+);
+
+-- 3. Bảng Khoa
+CREATE TABLE khoa (
+id INT AUTO_INCREMENT PRIMARY KEY,
+ma_khoa VARCHAR(50) UNIQUE NOT NULL,
+ten_khoa VARCHAR(255) NOT NULL
+);
+
+-- 4. Bảng Ngành
+CREATE TABLE nganh (
+id INT AUTO_INCREMENT PRIMARY KEY,
+ma_nganh VARCHAR(50) UNIQUE NOT NULL,
+ten_nganh VARCHAR(255) NOT NULL,
+id_khoa INT NOT NULL,
+FOREIGN KEY (id_khoa) REFERENCES khoa(id) ON DELETE CASCADE
+);
+
+-- 5. Bảng Lớp
+CREATE TABLE lop (
+id INT AUTO_INCREMENT PRIMARY KEY,
+ma_lop VARCHAR(50) UNIQUE NOT NULL,
+ten_lop VARCHAR(255) NOT NULL,
+khoa_hoc VARCHAR(50) COMMENT 'Khóa học: VD D23, D24',
+id_nganh INT NOT NULL,
+FOREIGN KEY (id_nganh) REFERENCES nganh(id) ON DELETE CASCADE
+);
+
+-- 6. Bảng Kỳ Đánh Giá (Semester/Evaluation Period - Bổ sung Hạn chót)
+CREATE TABLE hocky (
+id INT AUTO_INCREMENT PRIMARY KEY,
+ma_hocky VARCHAR(50) UNIQUE NOT NULL,
+ten_hocky VARCHAR(100) NOT NULL,
+id_namhoc INT NOT NULL,
+ngay_bat_dau DATE,
+han_sv_tu_cham DATETIME COMMENT 'Hạn chót cho SV',
+han_bcs_duyet DATETIME COMMENT 'Hạn chót cho BCS',
+han_cvht_duyet DATETIME COMMENT 'Hạn chót cho CVHT',
+trang_thai BOOLEAN DEFAULT TRUE COMMENT '1: Đang mở, 0: Đã đóng khóa sổ',
+FOREIGN KEY (id_namhoc) REFERENCES namhoc(id) ON DELETE CASCADE
+);
+
+
+-- =========================================================================
+-- PHẦN 2: HỒ SƠ ĐỐI TƯỢNG VÀ PHÂN QUYỀN
+-- =========================================================================
+
+-- 7. Bảng Sinh viên
+CREATE TABLE sinhvien (
+id INT AUTO_INCREMENT PRIMARY KEY,
+id_user INT NOT NULL,
+mssv VARCHAR(50) NOT NULL UNIQUE,
+hoten VARCHAR(255) NOT NULL,
+email VARCHAR(100),
+sdt VARCHAR(15),
+id_lop INT NOT NULL,
+FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE CASCADE,
+FOREIGN KEY (id_lop) REFERENCES lop(id) ON DELETE CASCADE
+);
+
+-- 8. Bảng Phân công Ban Cán Sự (BCS)
+CREATE TABLE bcs_lop (
+id INT AUTO_INCREMENT PRIMARY KEY,
+id_sv INT NOT NULL,
+id_lop INT NOT NULL,
+id_hocky INT NOT NULL,
+chucvu VARCHAR(100) NOT NULL COMMENT 'Lớp trưởng, Bí thư',
+FOREIGN KEY (id_sv) REFERENCES sinhvien(id) ON DELETE CASCADE,
+FOREIGN KEY (id_lop) REFERENCES lop(id) ON DELETE CASCADE,
+FOREIGN KEY (id_hocky) REFERENCES hocky(id) ON DELETE CASCADE,
+UNIQUE (id_sv, id_lop, id_hocky)
+);
+
+-- 9. Bảng Cố vấn Học tập (CVHT)
+CREATE TABLE cvht (
+id INT AUTO_INCREMENT PRIMARY KEY,
+id_user INT NOT NULL,
+hoten VARCHAR(255) NOT NULL,
+email VARCHAR(100),
+sdt VARCHAR(15),
+id_lop INT NOT NULL COMMENT 'Lớp đang phụ trách',
+FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE CASCADE,
+FOREIGN KEY (id_lop) REFERENCES lop(id) ON DELETE CASCADE
+);
+
+-- 10. Bảng Admin / CTSV
+CREATE TABLE admin_ctsv (
+id INT AUTO_INCREMENT PRIMARY KEY,
+id_user INT NOT NULL,
+hoten VARCHAR(255) NOT NULL,
+email VARCHAR(100),
+FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE CASCADE
+);
+
+
+-- =========================================================================
+-- PHẦN 3: NGHIỆP VỤ LÕI - CHẤM ĐIỂM RÈN LUYỆN
+-- =========================================================================
+
+-- 11. Bảng Tiêu chí đánh giá (Hỗ trợ phân cấp I, I.1, I.1.a)
+CREATE TABLE tieu_chi (
+id INT AUTO_INCREMENT PRIMARY KEY,
+id_hocky INT NOT NULL,
+parent_id INT NULL COMMENT 'Mã tiêu chí cha. NULL nếu là mục lớn',
+noi_dung TEXT NOT NULL,
+diem_toi_da INT NOT NULL,
+yeu_cau_minh_chung BOOLEAN DEFAULT FALSE COMMENT '1: Bắt buộc nộp ảnh/file, 0: Không cần',
+thu_tu INT DEFAULT 0 COMMENT 'Dùng để sắp xếp vị trí hiển thị',
+FOREIGN KEY (id_hocky) REFERENCES hocky(id) ON DELETE CASCADE,
+FOREIGN KEY (parent_id) REFERENCES tieu_chi(id) ON DELETE CASCADE
+);
+
+-- 12. Bảng Phiếu Chấm Điểm (Grading Form)
+CREATE TABLE phieu_cham_diem (
+id INT AUTO_INCREMENT PRIMARY KEY,
+id_sv INT NOT NULL,
+id_hocky INT NOT NULL,
+tong_diem_sv INT DEFAULT 0,
+tong_diem_bcs INT DEFAULT 0,
+tong_diem_cvht INT DEFAULT 0,
+xep_loai VARCHAR(50) COMMENT 'Xuất sắc, Tốt, Khá, Trung bình, Yếu',
+trang_thai VARCHAR(50) DEFAULT 'BAN_NHAP' COMMENT 'BAN_NHAP, CHO_BCS, CHO_CVHT, HOAN_THANH',
+FOREIGN KEY (id_sv) REFERENCES sinhvien(id) ON DELETE CASCADE,
+FOREIGN KEY (id_hocky) REFERENCES hocky(id) ON DELETE CASCADE,
+UNIQUE (id_sv, id_hocky) -- 1 SV chỉ có 1 phiếu trong 1 học kỳ
+);
+
+-- 13. Bảng Chi tiết Phiếu Chấm Điểm (Điểm từng tiêu chí)
+CREATE TABLE chi_tiet_phieu (
+id INT AUTO_INCREMENT PRIMARY KEY,
+id_phieu INT NOT NULL,
+id_tieu_chi INT NOT NULL,
+diem_sv INT DEFAULT 0,
+diem_bcs INT DEFAULT 0,
+diem_cvht INT DEFAULT 0,
+FOREIGN KEY (id_phieu) REFERENCES phieu_cham_diem(id) ON DELETE CASCADE,
+FOREIGN KEY (id_tieu_chi) REFERENCES tieu_chi(id) ON DELETE CASCADE
+);
+
+-- 14. Bảng Minh Chứng (Evidence)
+CREATE TABLE minh_chung (
+id INT AUTO_INCREMENT PRIMARY KEY,
+id_sv INT NOT NULL,
+id_tieu_chi INT NOT NULL,
+id_hocky INT NOT NULL,
+url_file TEXT NOT NULL COMMENT 'Đường dẫn file ảnh/pdf',
+trang_thai_duyet VARCHAR(50) DEFAULT 'CHUA_DUYET' COMMENT 'CHUA_DUYET, HOP_LE, KHONG_HOP_LE',
+FOREIGN KEY (id_sv) REFERENCES sinhvien(id) ON DELETE CASCADE,
+FOREIGN KEY (id_tieu_chi) REFERENCES tieu_chi(id) ON DELETE CASCADE,
+FOREIGN KEY (id_hocky) REFERENCES hocky(id) ON DELETE CASCADE
+);
+
+
+-- =========================================================================
+-- PHẦN 4: KHIẾU NẠI, LƯU VẾT VÀ THÔNG BÁO
+-- =========================================================================
+
+-- 15. Bảng Yêu Cầu Sửa Điểm / Khiếu Nại
+CREATE TABLE khieu_nai (
+id INT AUTO_INCREMENT PRIMARY KEY,
+id_phieu INT NOT NULL,
+ly_do TEXT NOT NULL,
+minh_chung_bo_sung TEXT NULL COMMENT 'Link file bổ sung nếu có',
+cap_xu_ly VARCHAR(50) DEFAULT 'BCS' COMMENT 'BCS, CVHT, ADMIN',
+trang_thai VARCHAR(50) DEFAULT 'DANG_CHO' COMMENT 'DANG_CHO, DA_GIAI_QUYET, TU_CHOI',
+phan_hoi TEXT NULL,
+ngay_tao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY (id_phieu) REFERENCES phieu_cham_diem(id) ON DELETE CASCADE
+);
+
+-- 16. Bảng Lịch sử Thao tác (Audit Log / Lưu vết sửa điểm)
+CREATE TABLE lich_su_sua_diem (
+id INT AUTO_INCREMENT PRIMARY KEY,
+id_phieu INT NOT NULL,
+id_tieu_chi INT NULL COMMENT 'Sửa điểm ở tiêu chí nào',
+id_nguoi_sua INT NOT NULL COMMENT 'ID của user (BCS, CVHT, Admin) đã sửa',
+diem_cu INT NOT NULL,
+diem_moi INT NOT NULL,
+ly_do_sua TEXT NOT NULL,
+thoi_gian_sua TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY (id_phieu) REFERENCES phieu_cham_diem(id) ON DELETE CASCADE,
+FOREIGN KEY (id_tieu_chi) REFERENCES tieu_chi(id) ON DELETE CASCADE,
+FOREIGN KEY (id_nguoi_sua) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 17. Bảng Thông Báo
+CREATE TABLE thong_bao (
+id INT AUTO_INCREMENT PRIMARY KEY,
+id_nguoi_gui INT NOT NULL COMMENT 'ID Admin hoặc CVHT gửi',
+tieu_de VARCHAR(255) NOT NULL,
+noi_dung TEXT NOT NULL,
+pham_vi_nhan VARCHAR(50) NOT NULL COMMENT 'TOAN_TRUONG, LOP, CA_NHAN',
+id_lop_nhan INT NULL COMMENT 'Nếu gửi cho 1 lớp cụ thể',
+id_user_nhan INT NULL COMMENT 'Nếu gửi cho 1 cá nhân',
+ngay_gui TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY (id_nguoi_gui) REFERENCES users(id) ON DELETE CASCADE,
+FOREIGN KEY (id_lop_nhan) REFERENCES lop(id) ON DELETE CASCADE,
+FOREIGN KEY (id_user_nhan) REFERENCES users(id) ON DELETE CASCADE
+);
+

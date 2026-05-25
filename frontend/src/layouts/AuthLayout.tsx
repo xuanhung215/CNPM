@@ -1,0 +1,12 @@
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+
+export const AuthLayout: React.FC = () => {
+  return (
+    <div className="auth-layout">
+      <div className="auth-container">
+        <Outlet />
+      </div>
+    </div>
+  );
+};

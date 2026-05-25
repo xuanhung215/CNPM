@@ -1,0 +1,65 @@
+﻿TÀI LIỆU PHÂN TÍCH: 
+ĐỐI TƯỢNG VÀ CHỨC NĂNG
+
+
+Đề Tài : 
+XÂY DỰNG PHẦN MỀM CHẤM ĐIỂM RÈN LUYỆN CỦA SINH VIÊN HVCS
+1. Đối tượng sử dụng & phân quyền (Tóm tắt)
+Các đối tượng sử dụng chính của hệ thống bao gồm:
+● Sinh viên
+● Ban Cán sự Lớp (Lớp trưởng/Bí thư)
+● Cố vấn học tập (CVHT) 
+● Admin / Phòng Công tác Sinh viên (CTSV)
+Bảng phân quyền chức năng:
+
+Chức năngSinh viênBan Cán sự LớpCVHT / GVCNAdmin / Phòng CTSVĐăng nhập, quản lý tài khoản✓✓✓✓ (quản lý tất cả)Tạo tài khoản✓Xem kết quả/tiến độ đánh giá✓✓✓✓Tự đánh giá & nộp minh chứng✓✓Duyệt yêu cầu sửa điểm ✓(ghi nhận ) ✓(cấp lớp) ✓( toàn trường ) Gửi khiếu nại/thắc mắc/sửa điểm✓✓Chấm điểm & duyệt minh chứng cấp Lớp✓Chấm điểm & chốt điểm cấp CVHT✓Giải quyết khiếu nại✓ (cấp lớp)✓ (cấp trường)Quản lý danh mục (Tiêu chí, Lớp, Học kỳ...)✓Đóng/Mở đợt đánh giá & cài đặt thời hạn✓Thống kê & Xuất báo cáo✓ (cấp lớp)✓ (cấp lớp)✓ (toàn trường)Nhận thông báo ✓( từ CVHT, QTV)✓( từ CVHT, QTV)✓( từ QTV)Thông báo ✓( cấp lớp)✓( toàn trường)2. Chi tiết chức năng của từng đối tượng
+2.1. Sinh viên (Student)
+Là đối tượng trung tâm của hệ thống, thực hiện việc tự đánh giá bản thân.
+● Quản lý tài khoản: Đăng nhập, đổi mật khẩu, cập nhật thông tin cá nhân cơ bản.
+● Tự đánh giá: Điền điểm tự chấm vào phiếu đánh giá rèn luyện theo các tiêu chí của trường định sẵn.
+● Lưu trữ và tra cứu lịch sử (Archiving): Hệ thống cần cho phép xem lại điểm rèn luyện và minh chứng của các học kỳ/năm học trước đó, thay vì chỉ quản lý kỳ hiện tại.
+● Quản lý minh chứng: Tải lên các file hình ảnh, chứng chỉ, giấy khen (PDF, JPG) làm minh chứng cho các hoạt động đã tham gia.
+● Theo dõi kết quả: Xem điểm đã được Ban cán sự (BCS) lớp và Cố vấn học tập (CVHT) duyệt; xem xếp loại rèn luyện cuối kỳ.
+● Yêu cầu sửa điểm : Tạo phiếu yêu cầu điều chỉnh điểm khi phát hiện sai sót hoặc thấy điểm duyệt chưa hợp lý. Hệ thống cho phép nhập lý do và đính kèm minh chứng bổ sung để gửi lên cấp trên (BCS hoặc CVHT).
+● Khiếu nại: Gửi yêu cầu phúc khảo hoặc khiếu nại nếu thấy điểm số được duyệt chưa hợp lý. 
+● Nhận thông báo : nhận thông báo từ Quản trị viên , Cố Vấn Học Tập .
+2.2. Ban Cán sự Lớp (Class Committee - Lớp trưởng/Bí thư)
+Đóng vai trò là cấp duyệt thứ nhất.
+● Chức năng Sinh viên: Kế thừa toàn bộ chức năng của một sinh viên bình thường (tự chấm điểm cho mình).
+● Chấm điểm cấp lớp: Xem xét phiếu tự đánh giá và minh chứng của các thành viên trong lớp, tiến hành chấm điểm (có thể tăng/giảm so với điểm sinh viên tự chấm).
+● Tiếp nhận yêu cầu sửa điểm (Bổ sung): Xem xét các yêu cầu sửa điểm từ sinh viên trong lớp. Nếu yêu cầu hợp lý ở mức độ sơ bộ, BCS có thể cập nhật lại điểm cấp lớp hoặc chuyển tiếp yêu cầu lên CVHT kèm theo ghi chú.
+● Xác nhận minh chứng: Đánh dấu hợp lệ hoặc không hợp lệ đối với các minh chứng sinh viên nộp.
+● Theo dõi tiến độ lớp: Xem danh sách những sinh viên chưa chấm điểm, nhắc nhở hoàn thành đúng hạn.
+● Xuất báo cáo cấp lớp: Xuất bảng điểm tổng hợp của toàn lớp (file Excel) để nộp cho CVHT hoặc lưu trữ.
+2.3. Cố vấn Học tập (Academic Advisor)
+Đóng vai trò là cấp duyệt thứ hai và quyết định ở quy mô lớp học.
+● Duyệt điểm cấp CVHT: Xem xét điểm do BCS lớp đã chấm, đưa ra điểm đánh giá cuối cùng.
+● Quản lý tài khoản: Đăng nhập, đổi mật khẩu, cập nhật thông tin cá nhân cơ bản ( thông tin lớp mình đang quản lý ) .
+● Giải quyết yêu cầu sửa điểm và khiếu nại: Tiếp nhận và xử lý các phản hồi, thắc mắc về điểm số của sinh viên trong lớp mình phụ trách. CVHT có quyền chỉnh sửa điểm trực tiếp trên hệ thống nếu yêu cầu chính đáng và thời gian đánh giá vẫn đang mở.
+● Khóa sổ lớp: Xác nhận hoàn thành việc chấm điểm của lớp, chốt dữ liệu để gửi lên cấp Khoa/Trường.
+● Thống kê: Xem báo cáo thống kê tình hình xếp loại rèn luyện (Xuất sắc, Tốt, Khá, Trung bình, Yếu) của lớp.
+● Thông báo : thông báo các thông tin liên quan đến việc chấm điểm rèn luyện cho  sinh viên mà cố vấn học tập đang quản lý. 
+● Nhận thông báo : tiếp nhận thông báo từ Quản trị viên . 
+● Tìm kiếm thông tin học sinh : tìm kiếm thông tin điểm rèn luyện sinh viên thông qua tên , mã số sinh viên . 
+2.4. Quản trị viên / Phòng Công tác Sinh viên (Admin / System Manager)
+Người có quyền hạn cao nhất, quản lý toàn bộ luồng hoạt động và dữ liệu của phần mềm.
+● Quản lý danh mục: Thêm, sửa, xóa dữ liệu hệ thống (Khoa, Khóa học, Lớp học, Danh sách sinh viên, Danh sách CVHT).
+● Tạo tài khoản : tạo các tài khoản cho sinh viên học viên , cố vấn học tập dựa vào danh sách của Phòng CTSV. 
+● Quản lý Tiêu chí đánh giá: Thiết lập các khung điểm, nội dung tiêu chí. Cập nhật hoặc thay đổi tiêu chí theo quy định của từng năm học.
+● Quản lý Kỳ đánh giá: Mở/Đóng cổng chấm điểm rèn luyện. Cài đặt thời hạn (deadline) riêng biệt cho từng cấp độ (Hạn tự chấm, Hạn BCS duyệt, Hạn CVHT duyệt).
+● Sửa điểm đặc cách & Giải quyết khiếu nại (Bổ sung): Có quyền mở khóa và trực tiếp sửa điểm cho sinh viên trong các trường hợp đặc biệt (ví dụ: đã quá hạn CVHT duyệt nhưng sinh viên có minh chứng giải trình cấp trường hợp lệ). Xử lý các tranh chấp vượt quá thẩm quyền của CVHT.
+● Báo cáo & Thống kê: Xuất các báo cáo tổng hợp quy mô toàn trường, vẽ biểu đồ tỷ lệ xếp loại, xuất danh sách sinh viên xuất sắc/yếu kém để phục vụ công tác xét học bổng hoặc kỷ luật.
+● Thông báo :  gửi các thông báo đến cho các đối tượng ( sinh viên , ban cán sự lợp , cố vấn học tập) cho toàn học viện .
+● Lịch sử thao tác (Audit Log / Lịch sử sửa điểm): Vì hệ thống có chức năng "Sửa điểm", bạn bắt buộc nên có tính năng lưu vết. Bất cứ khi nào BCS, CVHT hoặc Admin thay đổi điểm của một sinh viên, hệ thống phải ghi nhận lại: Ai đã sửa? Sửa lúc nào? Điểm cũ là bao nhiêu? Điểm mới là bao nhiêu? Lý do sửa là gì? (Điều này giúp minh bạch và tránh tranh chấp).
+● Chức năng tìm lọc thông tin các user :  tìm kiếm thông tin người dùng . 
+3. Nhóm đối tượng dữ liệu .
+● Phiếu chấm điểm (Grading Form):
+○ Thuộc tính: ID phiếu, Mã SV, Mã học kỳ, Điểm tự chấm, Điểm Lớp chấm, Điểm CVHT chấm, Tổng điểm, Xếp loại, Trạng thái (Bản nháp, Chờ BCS duyệt, Chờ CVHT duyệt, Đã hoàn thành).
+○ Chức năng: Lưu trữ lịch sử thay đổi điểm, tính toán tổng điểm tự động.
+● Tiêu chí đánh giá (Criterion):
+○ Thuộc tính: ID tiêu chí, Mã tiêu chí cha (để phân cấp Mục I, Mục I.1, v.v.), Nội dung, Điểm tối đa, Yêu cầu minh chứng (Có/Không).
+● Minh chứng (Evidence):
+○ Thuộc tính: ID minh chứng, Mã SV, Mã tiêu chí, Đường dẫn file (URL), Trạng thái duyệt.
+● Kỳ đánh giá (Semester/Evaluation Period):
+○ Thuộc tính: Mã học kỳ, Tên học kỳ, Ngày bắt đầu, Ngày kết thúc các mốc (SV, Lớp, CVHT).
+
