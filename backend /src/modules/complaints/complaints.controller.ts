@@ -15,15 +15,16 @@ export class ComplaintsController {
 
   @Post('submit')
   async submit(
-    @CurrentUser('sub') userId: string,
+    @CurrentUser() user: any,
     @Body() body: { gradingId: string; criteriaId: string; content: string; evidenceUrl?: string },
   ) {
     return this.complaintsService.createComplaint(
-      userId,
+      user.sub,
       body.gradingId,
       body.criteriaId,
       body.content,
       body.evidenceUrl,
+      user,
     );
   }
 

@@ -1,27 +1,81 @@
+import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { GradingStatus } from '../../common/constants/status.enum';
+import { UserEntity } from './user.entity';
 
-export class GradingDetailEntity {
+@Entity('gradings')
+export class GradingEntity {
+  @PrimaryColumn()
   id: string;
-  gradingId: string;
-  criteriaId: string;
-  studentScore: number;
-  bcsScore?: number;
-  bcsReason?: string; // Lý do giải trình nếu BCS thay đổi điểm
-  cvhtScore?: number;
-  cvhtReason?: string; // Lý do giải trình nếu CVHT thay đổi điểm
-  evidenceUrl?: string; // Link minh chứng ảnh hoặc PDF
+
+  @Column()
+  studentId: string;
+
+  // Tạm thời comment để tránh lỗi FK với dữ liệu rác cũ
+  // @ManyToOne(() => UserEntity)
+  // @JoinColumn({ name: 'studentId' })
+  // student: UserEntity;
+
+  @Column()
+  semesterId: string;
+
+  @Column({
+    type: 'enum',
+    enum: GradingStatus,
+    default: GradingStatus.BAN_NHAP,
+  })
+  status: GradingStatus;
+
+  @Column()
+  studentSumScore: number;
+
+  @Column({ nullable: true })
+  bcsSumScore?: number;
+
+  @Column({ nullable: true })
+  cvhtSumScore?: number;
+
+  @Column({ nullable: true })
+  classification?: string;
+
+  @OneToMany(() => GradingDetailEntity, (detail) => detail.grading)
+  details: GradingDetailEntity[];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }
 
-export class GradingEntity {
+@Entity('grading_details')
+export class GradingDetailEntity {
+  @PrimaryColumn()
   id: string;
-  studentId: string;
-  semesterId: string;
-  status: GradingStatus;
-  studentSumScore: number;
-  bcsSumScore?: number;
-  cvhtSumScore?: number;
-  classification?: string; // Xuất sắc, Tốt, Khá, Trung bình, Yếu, Kém
-  details: GradingDetailEntity[];
-  createdAt: Date;
-  updatedAt: Date;
+
+  @Column()
+  gradingId: string;
+
+  @Column()
+  criteriaId: string;
+
+  @Column()
+  studentScore: number;
+
+  @Column({ nullable: true })
+  bcsScore?: number;
+
+  @Column({ nullable: true, type: 'text' })
+  bcsReason?: string;
+
+  @Column({ nullable: true })
+  cvhtScore?: number;
+
+  @Column({ nullable: true, type: 'text' })
+  cvhtReason?: string;
+
+  @Column({ nullable: true })
+  evidenceUrl?: string;
+
+  @ManyToOne(() => GradingEntity, (grading) => grading.details)
+  grading: GradingEntity;
 }

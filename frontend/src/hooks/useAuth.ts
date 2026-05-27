@@ -5,13 +5,14 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const login = useCallback(async (username: string, role: string) => {
+  const login = useCallback(async (username: string, password?: string) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.post('/auth/login', { username, role });
-      const { accessToken, user } = response.data;
+      const response = await api.post('/auth/login', { username, password });
+      const { accessToken, refreshToken, user } = response.data;
       localStorage.setItem('token', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
       return { success: true, user };
     } catch (err: any) {

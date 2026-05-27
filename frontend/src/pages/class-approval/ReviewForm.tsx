@@ -176,7 +176,9 @@ export const ReviewForm: React.FC = () => {
           <UserCheck size={28} className="text-primary" />
           <div>
             <h1>THẨM ĐỊNH PHIẾU ĐIỂM RÈN LUYỆN</h1>
-            <p className="text-muted">Sinh viên: Nguyễn Văn A (sv01) | Học kỳ: {sheet.semesterId}</p>
+            <p className="text-muted">
+              Sinh viên: {sheet.student?.fullName || 'N/A'} ({sheet.studentId}) | Học kỳ: {sheet.semesterId}
+            </p>
           </div>
         </div>
         <div className="header-right">

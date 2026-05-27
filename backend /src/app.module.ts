@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { AcademicYearModule } from './modules/academic-year/academic-year.module';
@@ -9,13 +11,55 @@ import { EvidenceModule } from './modules/evidence/evidence.module';
 import { ComplaintsModule } from './modules/complaints/complaints.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { SeedModule } from './modules/seed.module';
+import { SettingsModule } from './modules/settings/settings.module';
 import configuration from './config/configuration';
+import { UserEntity } from './database/entities/user.entity';
+import { SemesterEntity } from './database/entities/semester.entity';
+import { CriteriaEntity } from './database/entities/criteria.entity';
+import { GradingEntity, GradingDetailEntity } from './database/entities/grading.entity';
+import { ComplaintEntity } from './database/entities/complaint.entity';
+import { NotificationEntity } from './database/entities/notification.entity';
+import { SystemSettingEntity } from './database/entities/system-setting.entity';
+import { AuditLogEntity } from './database/entities/audit-log.entity';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
+    }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 10,
+    }]),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        url: configService.get<string>('database.url'),
+        host: configService.get<string>('database.host'),
+        port: configService.get<number>('database.port'),
+        username: configService.get<string>('database.username'),
+        password: configService.get<string>('database.password'),
+        database: configService.get<string>('database.name'),
+        entities: [
+          UserEntity,
+          SemesterEntity,
+          CriteriaEntity,
+          GradingEntity,
+          GradingDetailEntity,
+          ComplaintEntity,
+          NotificationEntity,
+          SystemSettingEntity,
+          AuditLogEntity,
+        ],
+        synchronize: true,
+        ssl: configService.get<string>('database.url')?.includes('neon.tech') 
+          ? { rejectUnauthorized: false } 
+          : false,
+      }),
+      inject: [ConfigService],
     }),
     AuthModule,
     UsersModule,
@@ -26,6 +70,8 @@ import configuration from './config/configuration';
     ComplaintsModule,
     AuditLogModule,
     NotificationsModule,
+    SeedModule,
+    SettingsModule,
   ],
 })
 export class AppModule {}

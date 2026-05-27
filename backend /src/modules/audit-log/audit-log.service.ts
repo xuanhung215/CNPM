@@ -1,23 +1,38 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AuditLogEntity } from '../../database/entities/audit-log.entity';
 
 @Injectable()
 export class AuditLogService {
-  private logs = [
-    { id: 'l1', username: 'cvht01', action: 'Duyệt điểm phiếu rèn luyện của Nguyễn Văn A (sv01)', timestamp: new Date() },
-    { id: 'l2', username: 'sv01', action: 'Nộp phiếu tự đánh giá rèn luyện học kỳ 20252', timestamp: new Date() },
-  ];
+  constructor(
+    @InjectRepository(AuditLogEntity)
+    private auditLogRepository: Repository<AuditLogEntity>,
+  ) {}
 
-  async getLogs() {
-    return this.logs;
+  async getLogs(query?: { username?: string; action?: string }) {
+    const qb = this.auditLogRepository.createQueryBuilder('log');
+
+    if (query?.username) {
+      qb.andWhere('log.username LIKE :username', { username: `%${query.username}%` });
+    }
+
+    if (query?.action) {
+      qb.andWhere('log.action LIKE :action', { action: `%${query.action}%` });
+    }
+
+    qb.orderBy('log.timestamp', 'DESC');
+    qb.take(100);
+
+    return qb.getMany();
   }
 
   async addLog(username: string, action: string) {
-    this.logs.unshift({
-      id: `l${Date.now()}`,
+    const log = this.auditLogRepository.create({
       username,
       action,
-      timestamp: new Date(),
     });
+    await this.auditLogRepository.save(log);
   }
 
   async logScoreChange(

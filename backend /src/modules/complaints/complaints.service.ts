@@ -1,19 +1,25 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { ComplaintEntity, ComplaintStatus } from '../../database/entities/complaint.entity';
 import { GradingService } from '../grading/grading.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
 export class ComplaintsService {
-  private mockComplaints: ComplaintEntity[] = [];
-
   constructor(
+    @InjectRepository(ComplaintEntity)
+    private complaintsRepository: Repository<ComplaintEntity>,
     private gradingService: GradingService,
     private auditLogService: AuditLogService,
+    private notificationsService: NotificationsService,
+    private settingsService: SettingsService,
   ) {}
 
   async getComplaints() {
-    return this.mockComplaints;
+    return this.complaintsRepository.find();
   }
 
   async createComplaint(
@@ -22,24 +28,33 @@ export class ComplaintsService {
     criteriaId: string,
     content: string,
     evidenceUrl?: string,
+    currentUser?: any,
   ) {
-    const sheet = await this.gradingService.getSheetById(gradingId);
+    if (currentUser && currentUser.role === 'sinhvien' && currentUser.sub !== studentId) {
+      throw new ForbiddenException('Bạn chỉ có thể gửi khiếu nại cho chính mình');
+    }
+
+    const sheet = await this.gradingService.getSheetById(gradingId, currentUser);
+    if (!sheet) throw new NotFoundException('Không tìm thấy phiếu điểm');
     
     // 1. Kiểm tra trạng thái phiếu (Phải là HOAN_THANH mới được khiếu nại)
     if (sheet.status !== 'HOAN_THANH') {
       throw new BadRequestException('Chỉ có thể khiếu nại sau khi phiếu điểm đã được chốt hoàn thành.');
     }
 
-    // 2. Kiểm tra thời hạn khiếu nại (7 ngày kể từ ngày chốt điểm)
+    // 2. Kiểm tra thời hạn khiếu nại
     const now = new Date();
-    const lockDate = new Date(sheet.updatedAt);
-    const diffDays = Math.ceil((now.getTime() - lockDate.getTime()) / (1000 * 3600 * 24));
+    const updatedAt = sheet.updatedAt ? new Date(sheet.updatedAt) : now;
+    const diffDays = Math.ceil((now.getTime() - updatedAt.getTime()) / (1000 * 3600 * 24));
     
-    if (diffDays > 7) {
-      throw new ForbiddenException('Đã quá thời hạn 7 ngày để gửi khiếu nại cho phiếu điểm này.');
+    const windowDaysStr = await this.settingsService.getSetting('complaint_window_days');
+    const windowDays = parseInt(windowDaysStr || '7', 10);
+
+    if (diffDays > windowDays) {
+      throw new ForbiddenException(`Đã quá thời hạn ${windowDays} ngày để gửi khiếu nại cho phiếu điểm này.`);
     }
 
-    const complaint: ComplaintEntity = {
+    const complaint = this.complaintsRepository.create({
       id: `c_${Date.now()}`,
       studentId,
       gradingId,
@@ -47,12 +62,9 @@ export class ComplaintsService {
       content,
       evidenceUrl,
       status: ComplaintStatus.PENDING,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    });
     
-    this.mockComplaints.push(complaint);
-    return complaint;
+    return this.complaintsRepository.save(complaint);
   }
 
   async resolveComplaint(
@@ -62,7 +74,7 @@ export class ComplaintsService {
     response: string,
     newScore?: number,
   ) {
-    const complaint = this.mockComplaints.find(c => c.id === complaintId);
+    const complaint = await this.complaintsRepository.findOne({ where: { id: complaintId } });
     if (!complaint) throw new NotFoundException('Không tìm thấy đơn khiếu nại');
     if (complaint.status !== ComplaintStatus.PENDING) {
       throw new BadRequestException('Đơn khiếu nại này đã được xử lý.');
@@ -71,41 +83,42 @@ export class ComplaintsService {
     if (action === 'ACCEPT') {
       if (newScore === undefined) throw new BadRequestException('Phải cung cấp điểm số mới khi chấp nhận khiếu nại');
       
-      // Database Transaction - Giả lập
-      try {
-        // 1. Cập nhật trạng thái đơn
-        complaint.status = ComplaintStatus.RESOLVED;
-        complaint.response = response;
-        complaint.newScore = newScore;
-        complaint.updatedAt = new Date();
+      complaint.status = ComplaintStatus.RESOLVED;
+      complaint.response = response;
+      complaint.newScore = newScore;
 
-        // 2 & 3. Cập nhật điểm và tính toán lại tổng điểm
-        await this.gradingService.updateScoreByComplaint(
-          complaint.gradingId,
-          complaint.criteriaId,
-          newScore,
-        );
+      await this.gradingService.updateScoreByComplaint(
+        complaint.gradingId,
+        complaint.criteriaId,
+        newScore,
+      );
 
-        await this.auditLogService.addLog(
-          handlerUsername,
-          `Phê duyệt khiếu nại ${complaintId}: Cập nhật điểm tiêu chí ${complaint.criteriaId} thành ${newScore}`,
-        );
-      } catch (error) {
-        // Rollback nếu có lỗi (trong thực tế)
-        complaint.status = ComplaintStatus.PENDING;
-        throw error;
-      }
+      await this.auditLogService.addLog(
+        handlerUsername,
+        `Phê duyệt khiếu nại ${complaintId}: Cập nhật điểm tiêu chí ${complaint.criteriaId} thành ${newScore}`,
+      );
+
+      await this.notificationsService.addNotification(
+        'Khiếu nại được chấp nhận',
+        `Khiếu nại của bạn về tiêu chí ${complaint.criteriaId} đã được chấp nhận. Điểm mới: ${newScore}`,
+        complaint.studentId,
+      );
     } else {
       complaint.status = ComplaintStatus.REJECTED;
       complaint.response = response;
-      complaint.updatedAt = new Date();
-      
+
       await this.auditLogService.addLog(
         handlerUsername,
         `Từ chối khiếu nại ${complaintId}. Lý do: ${response}`,
       );
+
+      await this.notificationsService.addNotification(
+        'Khiếu nại bị từ chối',
+        `Khiếu nại của bạn về tiêu chí ${complaint.criteriaId} đã bị từ chối. Lý do: ${response}`,
+        complaint.studentId,
+      );
     }
 
-    return complaint;
+    return this.complaintsRepository.save(complaint);
   }
 }

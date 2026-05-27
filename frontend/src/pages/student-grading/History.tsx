@@ -1,36 +1,60 @@
+import React, { useEffect, useState } from 'react';
+import api from '../../config/api';
 import { CommonTable } from '../../components/CommonTable';
 import type { Column } from '../../components/CommonTable';
-import { History, CheckCircle } from 'lucide-react';
+import { History, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 interface HistoryItem {
-  semester: string;
-  studentScore: number;
-  bcsScore: number;
-  cvhtScore: number;
+  id: string;
+  semesterName: string;
+  studentSumScore: number;
+  bcsSumScore?: number;
+  cvhtSumScore?: number;
   status: string;
-  classification: string;
+  classification?: string;
 }
 
 export const StudentHistory: React.FC = () => {
-  const data: HistoryItem[] = [
-    { semester: 'Học kỳ I (2025 - 2026)', studentScore: 85, bcsScore: 82, cvhtScore: 82, status: 'HOAN_THANH', classification: 'Tốt' },
-    { semester: 'Học kỳ II (2024 - 2025)', studentScore: 78, bcsScore: 78, cvhtScore: 78, status: 'HOAN_THANH', classification: 'Khá' },
-    { semester: 'Học kỳ I (2024 - 2025)', studentScore: 92, bcsScore: 90, cvhtScore: 90, status: 'HOAN_THANH', classification: 'Xuất sắc' },
-  ];
+  const [data, setData] = useState<HistoryItem[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const fetchHistory = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/grading/history');
+      setData(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'HOAN_THANH':
+        return <span className="status-badge success"><CheckCircle size={12} /> Hoàn thành</span>;
+      case 'CHO_BCS':
+      case 'CHO_CVHT':
+        return <span className="status-badge warning"><Clock size={12} /> Đang duyệt</span>;
+      default:
+        return <span className="status-badge info"><AlertCircle size={12} /> Bản nháp</span>;
+    }
+  };
 
   const columns: Column<HistoryItem>[] = [
-    { header: 'Học kỳ', accessor: 'semester' },
-    { header: 'Điểm tự chấm', accessor: 'studentScore', width: '15%' },
-    { header: 'Điểm BCS lớp chấm', accessor: 'bcsScore', width: '15%' },
-    { header: 'Điểm Cố vấn duyệt', accessor: 'cvhtScore', width: '15%' },
-    { header: 'Phân loại', accessor: 'classification', width: '15%' },
+    { header: 'Học kỳ', accessor: 'semesterName' },
+    { header: 'Điểm tự chấm', accessor: 'studentSumScore', width: '15%' },
+    { header: 'Điểm BCS lớp chấm', accessor: (item) => item.bcsSumScore ?? '-', width: '15%' },
+    { header: 'Điểm Cố vấn duyệt', accessor: (item) => item.cvhtSumScore ?? '-', width: '15%' },
+    { header: 'Phân loại', accessor: (item) => item.classification ?? '-', width: '15%' },
     {
       header: 'Trạng thái',
-      accessor: () => (
-        <span className="status-badge success">
-          <CheckCircle size={12} /> Hoàn thành
-        </span>
-      ),
+      accessor: (item) => getStatusBadge(item.status),
       width: '15%',
     },
   ];
@@ -43,7 +67,7 @@ export const StudentHistory: React.FC = () => {
       </div>
 
       <div className="glass-card">
-        <CommonTable data={data} columns={columns} />
+        <CommonTable data={data} columns={columns} loading={loading} />
       </div>
     </div>
   );

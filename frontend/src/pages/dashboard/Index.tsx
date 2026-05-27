@@ -10,11 +10,17 @@ export const Dashboard: React.FC = () => {
   const isBcsOrCvht = user.role === Role.BCS || user.role === Role.CVHT;
 
   const [stats, setStats] = useState<any>(null);
+  const [currentSemester, setCurrentSemester] = useState<any>(null);
 
   useEffect(() => {
     if (isAdmin) {
       api.get('/grading/stats/overview').then(res => setStats(res.data));
     }
+    api.get('/academic-year/semesters').then(res => {
+      if (res.data && res.data.length > 0) {
+        setCurrentSemester(res.data[0]); // Lấy kỳ mới nhất
+      }
+    });
   }, [isAdmin]);
 
   const handleExport = async () => {
@@ -83,7 +89,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="stat-info">
             <h3>Học kỳ hiện tại</h3>
-            <p className="stat-value">Học kỳ II (2025 - 2026)</p>
+            <p className="stat-value">{currentSemester ? currentSemester.name : 'Đang tải...'}</p>
           </div>
         </div>
         
@@ -93,7 +99,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="stat-info">
             <h3>Trạng thái đợt chấm</h3>
-            <p className="stat-value">Đang mở cổng tự chấm</p>
+            <p className="stat-value">{currentSemester ? 'Đang mở cổng' : 'Chưa có kỳ đánh giá'}</p>
           </div>
         </div>
 

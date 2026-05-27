@@ -10,7 +10,9 @@ interface StudentApprovalRow {
   studentId: string;
   fullName: string;
   status: string;
-  totalScore: number;
+  studentSumScore: number;
+  bcsSumScore?: number;
+  cvhtSumScore?: number;
 }
 
 export const ListStudents: React.FC = () => {
@@ -21,7 +23,12 @@ export const ListStudents: React.FC = () => {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const data = await getClassStudents('CNPM-K45-A');
+        // Lấy thông tin user từ localStorage để lấy classId
+        const userJson = localStorage.getItem('user');
+        const user = userJson ? JSON.parse(userJson) : null;
+        const classId = user?.classId || 'CNPM-K45-A';
+        
+        const data = await getClassStudents(classId);
         setStudents(data);
       } catch (err) {
         console.error(err);
@@ -55,7 +62,7 @@ export const ListStudents: React.FC = () => {
     },
     {
       header: 'Điểm tự chấm',
-      accessor: (item) => `${item.totalScore} đ`,
+      accessor: (item) => `${item.studentSumScore} đ`,
       width: '15%',
     },
     {

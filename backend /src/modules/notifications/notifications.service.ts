@@ -1,13 +1,36 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { NotificationEntity } from '../../database/entities/notification.entity';
 
 @Injectable()
 export class NotificationsService {
-  private notifications = [
-    { id: 'n1', title: 'Thời hạn tự đánh giá học kỳ II', content: 'Hệ thống đã mở cổng tự đánh giá điểm rèn luyện. Hạn cuối cùng là ngày 30/06.', createdAt: new Date() },
-    { id: 'n2', title: 'Cập nhật từ Ban cán sự', content: 'Phiếu điểm rèn luyện của bạn đã được Lớp trưởng duyệt, chuyển tiếp cho Cố vấn học tập.', createdAt: new Date() },
-  ];
+  constructor(
+    @InjectRepository(NotificationEntity)
+    private notificationRepository: Repository<NotificationEntity>,
+  ) {}
 
-  async getNotifications() {
-    return this.notifications;
+  async getNotifications(userId?: string) {
+    return this.notificationRepository.find({
+      where: userId ? { userId } : {},
+      order: { createdAt: 'DESC' },
+      take: 50,
+    });
+  }
+
+  async markAsRead(id: string) {
+    await this.notificationRepository.update(id, { isRead: true });
+  }
+
+  async addNotification(title: string, content: string, userId?: string) {
+    const notification = this.notificationRepository.create({
+      title,
+      content,
+      userId,
+    });
+    await this.notificationRepository.save(notification);
+    
+    // In a real app, you could emit a socket.io event here
+    console.log(`[Notification] To ${userId || 'All'}: ${title} - ${content}`);
   }
 }

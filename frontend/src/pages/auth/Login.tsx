@@ -6,15 +6,15 @@ import { Lock, User } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const [username, setUsername] = useState('');
-  const [role, setRole] = useState<Role>(Role.SINHVIEN);
+  const [password, setPassword] = useState('');
   const { login, loading, error } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim()) return;
+    if (!username.trim() || !password.trim()) return;
 
-    const res = await login(username, role);
+    const res = await login(username, password);
     if (res.success) {
       navigate('/dashboard');
     }
@@ -45,19 +45,17 @@ export const Login: React.FC = () => {
         </div>
 
         <div className="form-group">
-          <label className="form-label">Vai trò truy cập</label>
+          <label className="form-label">Mật khẩu</label>
           <div className="input-with-icon">
             <Lock size={18} className="input-icon" />
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as Role)}
-              className="form-select"
-            >
-              <option value={Role.SINHVIEN}>Sinh viên (sv01)</option>
-              <option value={Role.BCS}>Ban cán sự lớp (bcs01)</option>
-              <option value={Role.CVHT}>Cố vấn học tập (cvht01)</option>
-              <option value={Role.ADMIN}>Quản trị viên (admin)</option>
-            </select>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Nhập mật khẩu"
+              className="form-input"
+              required
+            />
           </div>
         </div>
 
