@@ -4,12 +4,14 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { UserEntity } from '../../database/entities/user.entity';
 import { UserRole } from '../../common/constants/status.enum';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
+    private notificationsService: NotificationsService,
   ) {}
 
   async findByUsername(username: string): Promise<UserEntity | null> {
@@ -55,11 +57,16 @@ export class UsersService {
   }
 
   async create(userData: Partial<UserEntity>): Promise<UserEntity> {
+    const existing = await this.findByUsername(userData.username || '');
+    if (existing) {
+      throw new ForbiddenException('Tên đăng nhập đã tồn tại trong hệ thống. Vui lòng chọn tên khác.');
+    }
+
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(userData.password || '123456', salt);
     
     const newUser = this.usersRepository.create({
-      id: userData.id || `u_${Date.now()}`,
+      id: userData.id || userData.username || `u_${Date.now()}`,
       username: userData.username,
       password: hashedPassword,
       email: userData.email,
@@ -67,7 +74,20 @@ export class UsersService {
       role: userData.role,
       classId: userData.classId,
     });
-    return this.usersRepository.save(newUser);
+
+    const savedUser = await this.usersRepository.save(newUser);
+    
+    // Notify admin or relevant users
+    const allUsers = await this.findAll({ role: UserRole.ADMIN });
+    for (const admin of allUsers) {
+      await this.notificationsService.addNotification(
+        'Hệ thống',
+        `tạo tài khoản mới: ${userData.fullName} (${userData.role})`,
+        admin.id,
+      );
+    }
+
+    return savedUser;
   }
 
   async assignToClass(id: string, classId: string, currentUser: any): Promise<UserEntity> {
@@ -85,6 +105,13 @@ export class UsersService {
   async update(id: string, userData: Partial<UserEntity>): Promise<UserEntity> {
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('User not found');
+    
+    if (userData.username && userData.username !== user.username) {
+      const existing = await this.findByUsername(userData.username);
+      if (existing) {
+        throw new ForbiddenException('Tên đăng nhập đã tồn tại trong hệ thống. Vui lòng chọn tên khác.');
+      }
+    }
     
     if (userData.password) {
       const salt = await bcrypt.genSalt();

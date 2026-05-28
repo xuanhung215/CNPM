@@ -26,6 +26,12 @@ export class CriteriaEntity {
   @Column({ nullable: true, type: 'text' })
   description?: string;
 
+  @Column({ type: 'varchar', default: 'fixed' })
+  inputType: 'fixed' | 'select' | 'count' | 'checkbox';
+
+  @Column({ type: 'json', nullable: true })
+  options?: any;
+
   @CreateDateColumn()
   createdAt: Date;
 

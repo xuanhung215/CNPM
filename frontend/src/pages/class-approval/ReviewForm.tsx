@@ -4,6 +4,7 @@ import { useGrading } from '../../hooks/useGrading';
 import api from '../../config/api';
 import { ClipboardList, ArrowLeft, CheckCircle, Save, ExternalLink, Lock, Info, UserCheck } from 'lucide-react';
 import { Role } from '../../constants/role';
+import { useNotification } from '../../context/NotificationContext';
 
 export const ReviewForm: React.FC = () => {
   const { sheetId } = useParams<{ sheetId: string }>();
@@ -17,9 +18,10 @@ export const ReviewForm: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState('');
 
   const userJson = localStorage.getItem('user');
-  const currentUser = userJson ? JSON.parse(userJson) : { role: Role.BCS };
+  const currentUser = userJson ? JSON.parse(userJson) : { role: Role.BCS, fullName: 'Khách' };
   const isBcs = currentUser.role === Role.BCS;
   const isCvht = currentUser.role === Role.CVHT;
+  const { addNotification } = useNotification();
 
   useEffect(() => {
     const initData = async () => {
@@ -56,7 +58,9 @@ export const ReviewForm: React.FC = () => {
 
   const handleScoreChange = (criteriaId: string, value: number, maxPoints: number) => {
     if (sheet?.status === 'HOAN_THANH') return;
-    const resolvedValue = Math.min(Math.max(0, value), maxPoints);
+    const minVal = Math.min(0, maxPoints);
+    const maxVal = Math.max(0, maxPoints);
+    const resolvedValue = Math.min(Math.max(minVal, value), maxVal);
     setScores((prev) => ({ ...prev, [criteriaId]: resolvedValue }));
   };
 
@@ -81,10 +85,12 @@ export const ReviewForm: React.FC = () => {
         const res = await submitBcsReview(sheetId, details);
         setSheet(res);
         setSuccessMsg('Đã lưu điểm thẩm định của Ban cán sự lớp! Phiếu điểm đã được chuyển cho Cố vấn học tập duyệt.');
+        addNotification(currentUser.fullName, 'thẩm định và gửi phiếu lên Cố vấn học tập');
       } else if (isCvht) {
         const res = await submitCvhtApprove(sheetId, details);
         setSheet(res);
         setSuccessMsg('Cố vấn học tập đã chính thức duyệt và khóa phiếu điểm rèn luyện! Trạng thái: HOÀN THÀNH.');
+        addNotification(currentUser.fullName, 'duyệt và khóa phiếu điểm');
       }
       window.scrollTo(0, 0);
     } catch (err) {
@@ -97,6 +103,76 @@ export const ReviewForm: React.FC = () => {
   };
 
   const isLocked = sheet?.status === 'HOAN_THANH';
+
+  const renderScoreInput = (c: any, currentScore: number, scoreChanged: boolean) => {
+    if (c.inputType === 'select') {
+      const opts = Array.isArray(c.options) ? c.options : [];
+      return (
+        <select 
+          value={currentScore} 
+          onChange={e => handleScoreChange(c.id, Number(e.target.value), c.maxPoints)}
+          className={`form-control text-sm w-full ${scoreChanged ? 'input-changed' : ''}`}
+          disabled={isLocked}
+        >
+          <option value={0}>-- Chọn --</option>
+          {opts.map((o: any, idx: number) => (
+            <option key={idx} value={o.points}>{o.label} ({o.points > 0 ? `+${o.points}` : o.points}đ)</option>
+          ))}
+        </select>
+      );
+    }
+
+    if (c.inputType === 'count') {
+      const unit = c.options?.unitPoint || 1;
+      const count = currentScore / unit;
+      const maxCount = c.maxPoints > 0 ? Math.floor(c.maxPoints / unit) : 100;
+      return (
+        <div className="flex items-center justify-center gap-1">
+          <input 
+            type="number" 
+            min="0"
+            max={maxCount}
+            value={count || ''}
+            onChange={e => {
+              const val = Number(e.target.value) || 0;
+              handleScoreChange(c.id, val * unit, c.maxPoints);
+            }}
+            className={`score-input-table w-16 ${scoreChanged ? 'input-changed' : ''}`}
+            disabled={isLocked}
+          />
+          <span className="text-xs text-gray-500 whitespace-nowrap">x{unit}đ</span>
+        </div>
+      );
+    }
+
+    if (c.inputType === 'checkbox') {
+      return (
+        <div className="flex items-center justify-center">
+          <input 
+            type="checkbox"
+            checked={currentScore !== 0}
+            onChange={e => handleScoreChange(c.id, e.target.checked ? c.maxPoints : 0, c.maxPoints)}
+            disabled={isLocked}
+            style={{ width: '20px', height: '20px', cursor: isLocked ? 'default' : 'pointer' }}
+          />
+        </div>
+      );
+    }
+
+    // Default 'fixed'
+    return (
+      <input
+        type="number"
+        min="0"
+        max={c.maxPoints}
+        value={currentScore === 0 ? '' : currentScore}
+        onChange={(e) => handleScoreChange(c.id, parseInt(e.target.value) || 0, c.maxPoints)}
+        className={`score-input-table ${scoreChanged ? 'input-changed' : ''}`}
+        disabled={isLocked}
+      />
+    );
+  };
+
 
   const renderReviewRows = (nodes: any[], level = 0) => {
     return nodes.map((c) => {
@@ -124,15 +200,7 @@ export const ReviewForm: React.FC = () => {
               {isParent ? (
                 <span className="parent-score-display">{currentScore}</span>
               ) : (
-                <input
-                  type="number"
-                  min="0"
-                  max={c.maxPoints}
-                  value={currentScore}
-                  onChange={(e) => handleScoreChange(c.id, parseInt(e.target.value) || 0, c.maxPoints)}
-                  className={`score-input-table ${scoreChanged ? 'input-changed' : ''}`}
-                  disabled={isLocked}
-                />
+                renderScoreInput(c, currentScore, scoreChanged)
               )}
             </td>
             <td>

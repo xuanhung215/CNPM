@@ -30,12 +30,12 @@ export class ComplaintsController {
 
   @Post('resolve/:id')
   async resolve(
-    @CurrentUser('username') username: string,
+    @CurrentUser() user: any,
     @Param('id') id: string,
     @Body() body: { action: 'ACCEPT' | 'REJECT'; response: string; newScore?: number },
   ) {
     return this.complaintsService.resolveComplaint(
-      username,
+      user,
       id,
       body.action,
       body.response,

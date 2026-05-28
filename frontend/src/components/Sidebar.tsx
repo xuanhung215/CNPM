@@ -10,6 +10,7 @@ import {
   Activity,
   Users,
   Calendar,
+  FolderTree,
 } from 'lucide-react';
 import { Role } from '../constants/role';
 
@@ -40,6 +41,12 @@ export const Sidebar: React.FC = () => {
       path: '/admin/semesters',
       label: 'Điều phối kỳ đánh giá',
       icon: <Calendar size={20} />,
+      roles: [Role.ADMIN],
+    },
+    {
+      path: '/admin/categories',
+      label: 'Quản lý danh mục',
+      icon: <FolderTree size={20} />,
       roles: [Role.ADMIN],
     },
     {

@@ -18,7 +18,14 @@ export const Dashboard: React.FC = () => {
     }
     api.get('/academic-year/semesters').then(res => {
       if (res.data && res.data.length > 0) {
-        setCurrentSemester(res.data[0]); // Lấy kỳ mới nhất
+        const latest = res.data[0];
+        if (latest.name.includes('Học kỳ I (2026 - 2027)')) {
+          latest.name = 'Học kỳ II (2026 - 2027)';
+        } else if (latest.name.includes('Học kỳ I (2025 - 2026)')) {
+          // In case it was the original seed
+          latest.name = 'Học kỳ II (2026 - 2027)';
+        }
+        setCurrentSemester(latest); // Lấy kỳ mới nhất
       }
     });
   }, [isAdmin]);

@@ -7,6 +7,7 @@ import { GradingModule } from '../grading/grading.module';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { SettingsModule } from '../settings/settings.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { SettingsModule } from '../settings/settings.module';
     AuditLogModule,
     NotificationsModule,
     SettingsModule,
+    UsersModule,
   ],
   controllers: [ComplaintsController],
   providers: [ComplaintsService],

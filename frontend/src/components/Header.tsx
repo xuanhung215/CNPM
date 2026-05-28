@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, User, Bell, Key } from 'lucide-react';
 import api from '../config/api';
+import { useNotification } from '../context/NotificationContext';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
   const [showPwdModal, setShowPwdModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [newPwd, setNewPwd] = useState('');
   const userJson = localStorage.getItem('user');
   const user = userJson ? JSON.parse(userJson) : { fullName: 'Khách', role: 'guest' };
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotification();
+  const notificationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -28,6 +44,12 @@ export const Header: React.FC = () => {
     }
   };
 
+  const handleNotificationClick = (notification: any) => {
+    if (!notification.isRead) {
+      markAsRead(notification.id);
+    }
+  };
+
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'admin': return 'Quản trị viên';
@@ -44,9 +66,64 @@ export const Header: React.FC = () => {
         <h2>HỆ THỐNG QUẢN LÝ ĐIỂM RÈN LUYỆN</h2>
       </div>
       <div className="header-right">
-        <div className="header-notification" style={{ position: 'relative', cursor: 'pointer' }}>
-          <Bell size={20} className="header-icon" />
-          <span className="badge">2</span>
+        <div className="header-notification" style={{ position: 'relative', cursor: 'pointer' }} ref={notificationRef}>
+          <div onClick={() => setShowNotifications(!showNotifications)}>
+            <Bell size={20} className="header-icon" />
+            {unreadCount > 0 && (
+              <span className="badge" style={{ position: 'absolute', top: -5, right: -5, minWidth: 18, height: 18, borderRadius: '50%', backgroundColor: '#ef4444', color: 'white', fontSize: 11, fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </div>
+          
+          {showNotifications && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              right: 0,
+              marginTop: 8,
+              width: 350,
+              maxHeight: 400,
+              backgroundColor: 'white',
+              borderRadius: 8,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              zIndex: 1000,
+              overflow: 'hidden'
+            }}>
+              <div style={{ overflowY: 'auto', maxHeight: 400 }}>
+                {notifications.length === 0 ? (
+                  <div style={{
+                    padding: '30px 20px',
+                    textAlign: 'center',
+                    color: '#9ca3af',
+                    fontSize: 14
+                  }}>
+                    Không có thông báo nào
+                  </div>
+                ) : (
+                  notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      onClick={() => handleNotificationClick(notification)}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom: '1px solid #f0f0f0',
+                        cursor: 'pointer',
+                        backgroundColor: notification.isRead ? 'white' : '#f8fafc'
+                      }}
+                    >
+                      <div style={{
+                        fontSize: 13,
+                        color: '#374151'
+                      }}>
+                        <strong>{notification.title}</strong> {notification.content}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
         <div className="user-profile" onClick={() => setShowPwdModal(true)} style={{ cursor: 'pointer' }} title="Đổi mật khẩu">
           <div className="user-avatar">

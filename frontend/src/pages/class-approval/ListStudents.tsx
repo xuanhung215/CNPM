@@ -53,7 +53,7 @@ export const ListStudents: React.FC = () => {
   };
 
   const columns: Column<StudentApprovalRow>[] = [
-    { header: 'Mã sinh viên', accessor: 'studentId', width: '15%' },
+    { header: 'Mã sinh viên', accessor: (item: any) => item.studentUsername || item.studentId, width: '15%' },
     { header: 'Họ và tên', accessor: 'fullName' },
     {
       header: 'Trạng thái',

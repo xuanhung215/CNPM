@@ -6,6 +6,8 @@ import { GradingService } from '../grading/grading.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SettingsService } from '../settings/settings.service';
+import { UsersService } from '../users/users.service';
+import { UserRole } from '../../common/constants/status.enum';
 
 @Injectable()
 export class ComplaintsService {
@@ -16,6 +18,7 @@ export class ComplaintsService {
     private auditLogService: AuditLogService,
     private notificationsService: NotificationsService,
     private settingsService: SettingsService,
+    private usersService: UsersService,
   ) {}
 
   async getComplaints() {
@@ -30,7 +33,7 @@ export class ComplaintsService {
     evidenceUrl?: string,
     currentUser?: any,
   ) {
-    if (currentUser && currentUser.role === 'sinhvien' && currentUser.sub !== studentId) {
+    if (currentUser && currentUser.role === UserRole.SINHVIEN && currentUser.sub !== studentId) {
       throw new ForbiddenException('Bạn chỉ có thể gửi khiếu nại cho chính mình');
     }
 
@@ -64,11 +67,30 @@ export class ComplaintsService {
       status: ComplaintStatus.PENDING,
     });
     
-    return this.complaintsRepository.save(complaint);
+    const savedComplaint = await this.complaintsRepository.save(complaint);
+    
+    // Thông báo cho admin/cvht/bcs về khiếu nại mới
+    const student = await this.usersService.findById(studentId);
+    const allUsers = await this.usersService.findAll();
+    const notifyUsers = allUsers.filter(u => 
+      u.role === UserRole.ADMIN || 
+      u.role === UserRole.CVHT || 
+      (student?.classId && u.role === UserRole.BCS && u.classId === student.classId)
+    );
+    
+    for (const notifyUser of notifyUsers) {
+      await this.notificationsService.addNotification(
+        student?.fullName || 'Sinh viên',
+        `gửi khiếu nại về tiêu chí ${criteriaId}`,
+        notifyUser.id,
+      );
+    }
+    
+    return savedComplaint;
   }
 
   async resolveComplaint(
-    handlerUsername: string,
+    handlerUser: any,
     complaintId: string,
     action: 'ACCEPT' | 'REJECT',
     response: string,
@@ -79,6 +101,9 @@ export class ComplaintsService {
     if (complaint.status !== ComplaintStatus.PENDING) {
       throw new BadRequestException('Đơn khiếu nại này đã được xử lý.');
     }
+
+    const handler = await this.usersService.findById(handlerUser.sub);
+    const handlerName = handler?.fullName || handlerUser.username;
 
     if (action === 'ACCEPT') {
       if (newScore === undefined) throw new BadRequestException('Phải cung cấp điểm số mới khi chấp nhận khiếu nại');
@@ -94,13 +119,13 @@ export class ComplaintsService {
       );
 
       await this.auditLogService.addLog(
-        handlerUsername,
+        handlerUser.username,
         `Phê duyệt khiếu nại ${complaintId}: Cập nhật điểm tiêu chí ${complaint.criteriaId} thành ${newScore}`,
       );
 
       await this.notificationsService.addNotification(
-        'Khiếu nại được chấp nhận',
-        `Khiếu nại của bạn về tiêu chí ${complaint.criteriaId} đã được chấp nhận. Điểm mới: ${newScore}`,
+        handlerName,
+        `chấp nhận khiếu nại và cập nhật điểm tiêu chí ${complaint.criteriaId} thành ${newScore}`,
         complaint.studentId,
       );
     } else {
@@ -108,13 +133,13 @@ export class ComplaintsService {
       complaint.response = response;
 
       await this.auditLogService.addLog(
-        handlerUsername,
+        handlerUser.username,
         `Từ chối khiếu nại ${complaintId}. Lý do: ${response}`,
       );
 
       await this.notificationsService.addNotification(
-        'Khiếu nại bị từ chối',
-        `Khiếu nại của bạn về tiêu chí ${complaint.criteriaId} đã bị từ chối. Lý do: ${response}`,
+        handlerName,
+        `từ chối khiếu nại về tiêu chí ${complaint.criteriaId}. Lý do: ${response}`,
         complaint.studentId,
       );
     }

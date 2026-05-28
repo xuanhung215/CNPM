@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useGrading } from '../../hooks/useGrading';
 import api from '../../config/api';
 import { ClipboardList, Save, Upload, Check, FileText, AlertCircle, Send, Info } from 'lucide-react';
+import { useNotification } from '../../context/NotificationContext';
 
 export const FormGrading: React.FC = () => {
   const userJson = localStorage.getItem('user');
   const user = userJson ? JSON.parse(userJson) : { fullName: 'Khách', username: 'N/A', classId: 'N/A' };
 
   const { getMySheet, submitStudentScore, loading, error } = useGrading();
+  const { addNotification } = useNotification();
   const [criteria, setCriteria] = useState<any[]>([]);
   const [scores, setScores] = useState<{ [key: string]: number }>({});
   const [evidence, setEvidence] = useState<{ [key: string]: string }>({});
@@ -56,14 +58,21 @@ export const FormGrading: React.FC = () => {
 
   const handleScoreChange = (criteriaId: string, value: number, maxPoints: number) => {
     if (isLocked) return;
-    const resolvedValue = Math.min(Math.max(0, value), maxPoints);
+    const minVal = Math.min(0, maxPoints);
+    const maxVal = Math.max(0, maxPoints);
+    const resolvedValue = Math.min(Math.max(minVal, value), maxVal);
     setScores((prev) => ({ ...prev, [criteriaId]: resolvedValue }));
   };
 
-  const handleEvidenceMock = (criteriaId: string) => {
+  const handleFileUpload = (criteriaId: string, event: React.ChangeEvent<HTMLInputElement>) => {
     if (isLocked) return;
-    const mockUrl = `https://res.cloudinary.com/demo/image/upload/v1715999999/proof_${criteriaId}_${Date.now()}.png`;
-    setEvidence((prev) => ({ ...prev, [criteriaId]: mockUrl }));
+    const file = event.target.files?.[0];
+    if (file) {
+      // Create a local blob URL so the user can preview the file immediately
+      const fileUrl = URL.createObjectURL(file);
+      setEvidence((prev) => ({ ...prev, [criteriaId]: fileUrl }));
+      setSuccessMsg(`Đã đính kèm tệp: ${file.name}`);
+    }
   };
 
   const handleAction = async (isDraft: boolean) => {
@@ -80,6 +89,7 @@ export const FormGrading: React.FC = () => {
         setSuccessMsg('Đã lưu tạm dữ liệu thành công!');
       } else {
         setSuccessMsg('Nộp phiếu tự đánh giá thành công! Điểm số đã được chuyển lên Ban Cán Sự lớp phê duyệt.');
+        addNotification(user.fullName, 'nộp phiếu tự đánh giá');
         setIsLocked(true);
         setStatus(updatedSheet.status);
       }
@@ -108,6 +118,75 @@ export const FormGrading: React.FC = () => {
 
   const calculateTotal = () => {
     return Object.values(scores).reduce((sum, val) => sum + (val || 0), 0);
+  };
+
+  const renderScoreInput = (c: any, currentScore: number) => {
+    if (c.inputType === 'select') {
+      const opts = Array.isArray(c.options) ? c.options : [];
+      return (
+        <select 
+          value={currentScore} 
+          onChange={e => handleScoreChange(c.id, Number(e.target.value), c.maxPoints)}
+          className="form-control text-sm w-full"
+          disabled={isLocked}
+        >
+          <option value={0}>-- Chọn --</option>
+          {opts.map((o: any, idx: number) => (
+            <option key={idx} value={o.points}>{o.label} ({o.points > 0 ? `+${o.points}` : o.points}đ)</option>
+          ))}
+        </select>
+      );
+    }
+
+    if (c.inputType === 'count') {
+      const unit = c.options?.unitPoint || 1;
+      const count = currentScore / unit;
+      const maxCount = c.maxPoints > 0 ? Math.floor(c.maxPoints / unit) : 100;
+      return (
+        <div className="flex items-center justify-center gap-1">
+          <input 
+            type="number" 
+            min="0"
+            max={maxCount}
+            value={count || ''}
+            onChange={e => {
+              const val = Number(e.target.value) || 0;
+              handleScoreChange(c.id, val * unit, c.maxPoints);
+            }}
+            className="score-input-table w-16"
+            disabled={isLocked}
+          />
+          <span className="text-xs text-gray-500 whitespace-nowrap">x{unit}đ</span>
+        </div>
+      );
+    }
+
+    if (c.inputType === 'checkbox') {
+      return (
+        <div className="flex items-center justify-center">
+          <input 
+            type="checkbox"
+            checked={currentScore !== 0}
+            onChange={e => handleScoreChange(c.id, e.target.checked ? c.maxPoints : 0, c.maxPoints)}
+            disabled={isLocked}
+            style={{ width: '20px', height: '20px', cursor: isLocked ? 'default' : 'pointer' }}
+          />
+        </div>
+      );
+    }
+
+    // Default 'fixed'
+    return (
+      <input
+        type="number"
+        min="0"
+        max={c.maxPoints}
+        value={currentScore === 0 ? '' : currentScore}
+        onChange={(e) => handleScoreChange(c.id, parseInt(e.target.value) || 0, c.maxPoints)}
+        className="score-input-table"
+        disabled={isLocked}
+      />
+    );
   };
 
   const renderCriteriaRows = (nodes: any[], level = 0) => {
@@ -143,15 +222,7 @@ export const FormGrading: React.FC = () => {
               {isParent ? (
                 <span className="parent-score-display">{currentScore}</span>
               ) : (
-                <input
-                  type="number"
-                  min="0"
-                  max={c.maxPoints}
-                  value={currentScore}
-                  onChange={(e) => handleScoreChange(c.id, parseInt(e.target.value) || 0, c.maxPoints)}
-                  className="score-input-table"
-                  disabled={isLocked}
-                />
+                renderScoreInput(c, currentScore)
               )}
             </td>
             <td className="text-center">
@@ -163,13 +234,14 @@ export const FormGrading: React.FC = () => {
                     </a>
                   ) : (
                     !isLocked && (
-                      <button
-                        type="button"
-                        onClick={() => handleEvidenceMock(c.id)}
-                        className="btn-upload-table"
-                      >
+                      <label className="btn-upload-table" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <input 
+                          type="file" 
+                          style={{ display: 'none' }}
+                          onChange={(e) => handleFileUpload(c.id, e)}
+                        />
                         <Upload size={12} />
-                      </button>
+                      </label>
                     )
                   )}
                 </div>

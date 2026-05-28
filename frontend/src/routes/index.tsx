@@ -16,6 +16,7 @@ import { ListComplaints } from '../pages/complaints/ListComplaints';
 import { AuditLogs } from '../pages/audit-logs/Index';
 import { UserManagement } from '../pages/admin-mgmt/UserManagement';
 import { SemesterManagement } from '../pages/admin-mgmt/SemesterManagement';
+import { CategoryManagement } from '../pages/admin-mgmt/CategoryManagement';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -97,6 +98,15 @@ export const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute allowedRoles={[Role.ADMIN]}>
               <SemesterManagement />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/categories"
+          element={
+            <ProtectedRoute allowedRoles={[Role.ADMIN]}>
+              <CategoryManagement />
             </ProtectedRoute>
           }
         />

@@ -13,6 +13,7 @@ import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { SeedModule } from './modules/seed.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 import configuration from './config/configuration';
 import { UserEntity } from './database/entities/user.entity';
 import { SemesterEntity } from './database/entities/semester.entity';
@@ -22,6 +23,10 @@ import { ComplaintEntity } from './database/entities/complaint.entity';
 import { NotificationEntity } from './database/entities/notification.entity';
 import { SystemSettingEntity } from './database/entities/system-setting.entity';
 import { AuditLogEntity } from './database/entities/audit-log.entity';
+import { FacultyEntity } from './database/entities/faculty.entity';
+import { AcademicProgramEntity } from './database/entities/academic-program.entity';
+import { ClassEntity } from './database/entities/class.entity';
+import { ClassroomEntity } from './database/entities/classroom.entity';
 
 @Module({
   imports: [
@@ -53,6 +58,10 @@ import { AuditLogEntity } from './database/entities/audit-log.entity';
           NotificationEntity,
           SystemSettingEntity,
           AuditLogEntity,
+          FacultyEntity,
+          AcademicProgramEntity,
+          ClassEntity,
+          ClassroomEntity,
         ],
         synchronize: true,
         ssl: configService.get<string>('database.url')?.includes('neon.tech') 
@@ -72,6 +81,7 @@ import { AuditLogEntity } from './database/entities/audit-log.entity';
     NotificationsModule,
     SeedModule,
     SettingsModule,
+    CategoriesModule,
   ],
 })
 export class AppModule {}

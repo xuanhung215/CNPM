@@ -91,6 +91,7 @@ export class GradingService {
         result.push({
           id: sheet.id,
           studentId: student.id,
+          studentUsername: student.username,
           fullName: student.fullName,
           status: sheet.status,
           studentSumScore: sheet.studentSumScore || 0,
@@ -121,8 +122,10 @@ export class GradingService {
     for (const d of details) {
       const criteria = criteriaList.find(c => c.id === d.criteriaId);
       if (criteria) {
-        if (d.score > criteria.maxPoints) {
-          throw new BadRequestException(`Điểm số của tiêu chí ${d.criteriaId} vượt quá tối đa (${criteria.maxPoints})`);
+        const minVal = Math.min(0, criteria.maxPoints);
+        const maxVal = Math.max(0, criteria.maxPoints);
+        if (d.score < minVal || d.score > maxVal) {
+          throw new BadRequestException(`Điểm số của tiêu chí ${d.criteriaId} không hợp lệ (ngoài khoảng ${minVal} đến ${maxVal})`);
         }
         
         // Check if criteria has children
@@ -147,6 +150,21 @@ export class GradingService {
 
     if (!isDraft) {
       sheet.status = GradingStatus.CHO_BCS;
+      
+      // Notify BCS of the class
+      const student = await this.usersService.findById(studentId);
+      if (student && student.classId) {
+        const allUsers = await this.usersService.findAll();
+        const bcsUsers = allUsers.filter(u => u.role === UserRole.BCS && u.classId === student.classId);
+        
+        for (const bcs of bcsUsers) {
+          await this.notificationsService.addNotification(
+            student.fullName,
+            'nộp phiếu tự đánh giá',
+            bcs.id,
+          );
+        }
+      }
     } else {
       sheet.status = GradingStatus.BAN_NHAP;
     }
@@ -237,8 +255,8 @@ export class GradingService {
     sheet.status = GradingStatus.CHO_CVHT;
     
     await this.notificationsService.addNotification(
-      'Phiếu điểm đã được BCS duyệt',
-      `Phiếu điểm học kỳ ${sheet.semesterId} của bạn đã được Ban cán sự lớp duyệt.`,
+      bcs.fullName,
+      'thẩm định và gửi phiếu lên Cố vấn học tập',
       sheet.studentId,
     );
 
@@ -246,8 +264,8 @@ export class GradingService {
     const cvht = await (await this.usersService.findAll()).find(u => u.role === UserRole.CVHT && u.classId === student.classId);
     if (cvht) {
       await this.notificationsService.addNotification(
-        'Có phiếu điểm chờ duyệt',
-        `Sinh viên ${student.fullName} đã được BCS duyệt phiếu điểm, đang chờ bạn phê duyệt.`,
+        bcs.fullName,
+        'thẩm định và gửi phiếu lên Cố vấn học tập',
         cvht.id,
       );
     }
@@ -328,8 +346,8 @@ export class GradingService {
     sheet.classification = await this.calculateClassification(totalScore);
 
     await this.notificationsService.addNotification(
-      'Phiếu điểm đã được phê duyệt',
-      `Phiếu điểm học kỳ ${sheet.semesterId} của bạn đã được Cố vấn học tập phê duyệt hoàn thành. Tổng điểm: ${totalScore}`,
+      cvht.fullName,
+      'duyệt và khóa phiếu điểm',
       sheet.studentId,
     );
 
@@ -386,7 +404,7 @@ export class GradingService {
   }
 
   async getStatsOverview() {
-    const totalStudents = (await this.usersService.findAll()).filter(u => u.role === 'sinhvien').length;
+    const totalStudents = (await this.usersService.findAll()).filter(u => u.role === 'sinhvien' || u.role === 'bcs').length;
     const completedSheets = await this.gradingRepository.count({ where: { status: GradingStatus.HOAN_THANH } });
     const pendingBcs = await this.gradingRepository.count({ where: { status: GradingStatus.CHO_BCS } });
     const pendingCvht = await this.gradingRepository.count({ where: { status: GradingStatus.CHO_CVHT } });
